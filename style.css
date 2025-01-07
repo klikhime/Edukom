@@ -80,7 +80,8 @@ h1 {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 60%;
+  width: 80%; /* Set the width of the progress bar container */
+  max-width: 600px; /* Prevent the progress bar from becoming too wide */
   background-color: rgba(255, 255, 255, 0.2);
   padding: 10px;
   border-radius: 8px;
@@ -94,7 +95,7 @@ h1 {
 #progress-bar {
   height: 20px;
   background-color: #ffffff;
-  width: 0%;
+  width: 0%; /* Width will be updated dynamically */
   border-radius: 5px;
   z-index: 102;
   transition: width 0.3s ease-in-out;
