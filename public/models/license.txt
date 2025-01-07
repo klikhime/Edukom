@@ -1,0 +1,11 @@
+Model Information:
+* title:	Sistem Komputer - Ibnu Hakim
+* source:	https://sketchfab.com/3d-models/sistem-komputer-ibnu-hakim-242b9d6e10004a3ebb458b7f12511511
+* author:	ibnuhakim (https://sketchfab.com/ibnuhakim)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Sistem Komputer - Ibnu Hakim" (https://sketchfab.com/3d-models/sistem-komputer-ibnu-hakim-242b9d6e10004a3ebb458b7f12511511) by ibnuhakim (https://sketchfab.com/ibnuhakim) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
