@@ -61,8 +61,8 @@ const environment = new RoomEnvironment();
 const pmremGenerator = new THREE.PMREMGenerator(renderer);
 scene.environment = pmremGenerator.fromScene(environment).texture;
 
-// Mengatur warna latar belakang ke warna yang lebih gelap untuk mencocokkan tema
-scene.background = new THREE.Color(0x1b1b1b); // Latar belakang abu-abu gelap untuk mencocokkan tema (mendekati hitam)
+scene.background = new THREE.Color(0x1b1b1b);
+// scene.background = scene.environment;
 
 // Camera Setup
 const camera = new THREE.PerspectiveCamera(
@@ -92,8 +92,10 @@ controls.autoRotate = false;
 controls.target = new THREE.Vector3(0, 1, 0);
 controls.update();
 
+// Background Color
+scene.background = new THREE.Color(0x333333); // Sesuaikan dengan warna ground
+
 // Lighting Setup
-// SpotLight
 const spotLight = new THREE.SpotLight(0xffffff, 2000, 100, 0.22, 1);
 spotLight.position.set(0, 25, 0);
 spotLight.castShadow = true;
@@ -101,7 +103,7 @@ spotLight.shadow.bias = -0.0001;
 scene.add(spotLight);
 
 // Ambient Light
-const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
+const ambientLight = new THREE.AmbientLight(0x404040, 1.5); // Warna lebih gelap agar lebih menyatu
 scene.add(ambientLight);
 
 // Directional Light
@@ -116,7 +118,7 @@ groundGeometry.rotateX(-Math.PI / 2);
 
 // Update ground material
 const groundMaterial = new THREE.MeshStandardMaterial({
-  color: 0x333333,
+  color: 0x333333, // Sesuaikan warna dengan latar belakang
   roughness: 0.5,
   metalness: 0.1,
   side: THREE.DoubleSide,
@@ -129,13 +131,14 @@ groundMesh.receiveShadow = true;
 
 scene.add(groundMesh);
 
+let model;
 // GLTF Model Loading
 const loader = new GLTFLoader().setPath("public/models/");
 loader.load(
   "scene.gltf",
   (gltf) => {
     console.log("Model Loaded");
-    const model = gltf.scene;
+    model = gltf.scene;
     model.traverse((child) => {
       if (child.isMesh) {
         child.castShadow = true;
@@ -258,6 +261,9 @@ closeButton.addEventListener("click", () => {
 
 function animate() {
   requestAnimationFrame(animate);
+  if (model) {
+    model.rotation.y += 0.005; // Rotasi model secara perlahan pada sumbu Y
+  }
   controls.update();
   renderer.render(scene, camera);
 }
