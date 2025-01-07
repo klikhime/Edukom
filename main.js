@@ -171,14 +171,14 @@ const objectData = {
     description:
       "Monitor adalah layar komputer yang menampilkan semua hal yang sedang kita kerjakan di komputer, seperti tulisan, gambar, video, atau game. Ibaratnya, monitor adalah jendela utama untuk melihat dan mengontrol apa yang terjadi di dalam komputer.",
     additionalInfo:
-      "Komputer mengirimkan sinyal ke monitor, lalu monitor mengubah sinyal itu menjadi gambar atau video yang bisa kita lihat. Semakin canggih monitor, semakin tajam dan bagus tampilan yang dihasilkan.",
+      "Komputer mengirim sinyal ke monitor yang mengubahnya menjadi gambar yang dapat dilihat. Monitor yang lebih canggih menampilkan gambar yang lebih jelas dan tajam.",
   },
   MaterialFBXASC032FBXASC0352_1: {
     name: "Printer",
     description:
       "Printer adalah perangkat elektronik yang digunakan untuk mencetak dokumen, gambar, atau foto dari komputer atau perangkat lainnya ke media fisik seperti kertas. Ibaratnya, printer adalah 'pengubah' dari sesuatu yang digital menjadi sesuatu yang bisa kita pegang dan lihat langsung.",
     additionalInfo:
-      "Printer menerima data dari komputer atau perangkat lain, memprosesnya, dan mencetak hasilnya sesuai perintah. Ada yang mencetak dalam hitam-putih, ada juga yang mencetak berwarna, tergantung jenis dan modelnya.",
+      "Printer menerima data dari komputer dan mencetaknya. Ada printer hitam-putih dan berwarna, tergantung modelnya.",
   },
   MaterialFBXASC032FBXASC0354_ncl1_1_5: {
     name: "CPU",
@@ -192,14 +192,14 @@ const objectData = {
     description:
       "Keyboard adalah perangkat input utama yang digunakan untuk memasukkan data ke dalam komputer atau perangkat elektronik lainnya. Ibaratnya, keyboard adalah 'pintu' untuk berkomunikasi dengan komputer, karena kita memberikan perintah atau mengetik teks melalui tombol-tombolnya.",
     additionalInfo:
-      "Keyboard merupakan alat untuk mengetik dan memberikan perintah ke komputer. Semua yang kita lakukan di komputer, mulai dari menulis surat hingga bermain game, dimulai dari menekan tombol di keyboard! Tanpa keyboard, kita akan kesulitan untuk berinteraksi dengan perangkat.",
+      "Anda menekan tombol untuk mengetik teks atau memberikan perintah ke komputer.",
   },
   MaterialFBXASC032FBXASC0354_ncl1_1_1: {
     name: "Mouse",
     description:
       "Mouse adalah perangkat input komputer yang digunakan untuk menggerakkan kursor di layar dan memilih atau mengklik objek di dalam sistem komputer. Ibaratnya, mouse adalah penunjuk di dunia digital, membantu kita berinteraksi secara visual dengan apa yang ada di layar.",
     additionalInfo:
-      "Mouse merupakan alat yang digunakan untuk menggerakkan kursor di layar komputer dan klik objek atau perintah. Tanpa mouse, kita akan kesulitan berinteraksi dengan komputer, karena kita memerlukan perangkat untuk memilih, menggulir, dan menavigasi berbagai aplikasi dan file.",
+      "Anda menggerakkan mouse untuk menggerakkan kursor dan mengklik objek di layar.",
   },
 };
 
@@ -248,6 +248,7 @@ function onMouseDown(event) {
 }
 
 function showPopup(data) {
+  document.getElementById("object-tittle").innerText = data.name;
   document.getElementById("object-name").innerText = data.name;
   document.getElementById("object-description").innerText = data.description;
   document.getElementById("object-additional-info").innerText =
