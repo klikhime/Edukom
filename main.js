@@ -1,218 +1,229 @@
 import * as THREE from "three";
-
-import { BoxLineGeometry } from "three/addons/geometries/BoxLineGeometry.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { VRButton } from "three/addons/webxr/VRButton.js";
-import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFactory.js";
+import WebXRPolyfill from "webxr-polyfill";
+import { BoxLineGeometry } from "three/addons/geometries/BoxLineGeometry.js";
 
-let camera, scene, raycaster, renderer;
-let controller1, controller2;
-let controllerGrip1, controllerGrip2;
+// WebXR Polyfill Setup
+const polyfill = new WebXRPolyfill();
 
-let room, marker, floor, baseReferenceSpace;
+// DOM Elements
+const startBtn = document.getElementById("start-btn");
+const helpBtn = document.getElementById("help-btn");
+// const vrBtn = document.getElementById("VRButton");
+const progressContainer = document.getElementById("progress-container");
+const popup = document.getElementById("popup");
+const closeButton = document.getElementById("close-btn");
 
-let INTERSECTION;
-const tempMatrix = new THREE.Matrix4();
+startBtn.addEventListener("click", () => {
+  document.getElementById("boxWelcome").style.display = "none";
 
-init();
-
-function init() {
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x505050);
-
-  camera = new THREE.PerspectiveCamera(
-    50,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    10
-  );
-  camera.position.set(0, 1, 3);
-
-  room = new THREE.LineSegments(
-    new BoxLineGeometry(6, 6, 6, 10, 10, 10).translate(0, 3, 0),
-    new THREE.LineBasicMaterial({ color: 0xbcbcbc })
-  );
-  scene.add(room);
-
-  scene.add(new THREE.HemisphereLight(0xa5a5a5, 0x898989, 3));
-
-  const light = new THREE.DirectionalLight(0xffffff, 3);
-  light.position.set(1, 1, 1).normalize();
-  scene.add(light);
-
-  marker = new THREE.Mesh(
-    new THREE.CircleGeometry(0.25, 32).rotateX(-Math.PI / 2),
-    new THREE.MeshBasicMaterial({ color: 0xbcbcbc })
-  );
-  scene.add(marker);
-
-  floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(4.8, 4.8, 2, 2).rotateX(-Math.PI / 2),
-    new THREE.MeshBasicMaterial({
-      color: 0xbcbcbc,
-      transparent: true,
-      opacity: 0.25,
-    })
-  );
-  scene.add(floor);
-
-  raycaster = new THREE.Raycaster();
-
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setAnimationLoop(animate);
-
-  renderer.xr.addEventListener(
-    "sessionstart",
-    () => (baseReferenceSpace = renderer.xr.getReferenceSpace())
-  );
+  // Enable VR button
   renderer.xr.enabled = true;
-
-  document.body.appendChild(renderer.domElement);
   document.body.appendChild(VRButton.createButton(renderer));
+  initThreeJS();
+});
 
-  // controllers
+helpBtn.addEventListener("click", () => {
+  document.getElementById("welcome").style.display = "none";
+  helpBtn.style.display = "none";
+  document.getElementById("desk-app").innerHTML =
+    "Klik pada komponen untuk mengeksplorasi dan mendapatkan informasi lengkap tentang komponen tersebut.";
+});
 
-  function onSelectStart() {
-    this.userData.isSelecting = true;
+// vrBtn.addEventListener("click", () => {
+//   console.log("click");
+// });
+
+// Renderer Setup
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x1b1b1b);
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 1.25;
+document.body.appendChild(renderer.domElement);
+
+// Scene and Environment Setup
+const scene = new THREE.Scene();
+const environment = new RoomEnvironment();
+const pmremGenerator = new THREE.PMREMGenerator(renderer);
+scene.environment = pmremGenerator.fromScene(environment).texture;
+scene.background = new THREE.Color(0x5c5c5c);
+
+// Camera Setup
+const camera = new THREE.PerspectiveCamera(
+  45,
+  window.innerWidth / window.innerHeight,
+  1,
+  1000
+);
+camera.position.set(4, 5, 11);
+
+// Room Setup
+// const room = new THREE.LineSegments(
+//   new BoxLineGeometry(40, 14, 40, 10, 10, 10).translate(0, 6, 0), // Perbesar ukuran box dan subdivisi
+//   new THREE.LineBasicMaterial({ color: 0xbcbcbc })
+// );
+// scene.add(room);
+
+// Controls Setup
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.enablePan = false;
+controls.minDistance = 5;
+controls.maxDistance = 20;
+controls.minPolarAngle = 0.5;
+controls.maxPolarAngle = 1.5;
+controls.autoRotate = false;
+controls.target = new THREE.Vector3(0, 1, 0);
+controls.update();
+
+// Lighting Setup
+const spotLight = new THREE.SpotLight(0xffffff, 3000, 100, 0.22, 1);
+spotLight.position.set(0, 25, 0);
+spotLight.castShadow = true;
+spotLight.shadow.bias = -0.0001;
+scene.add(spotLight);
+
+const ambientLight = new THREE.AmbientLight(0x404040, 2);
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+directionalLight.position.set(10, 10, 10).normalize();
+directionalLight.castShadow = true;
+scene.add(directionalLight);
+
+// Ground Plane Setup
+const groundGeometry = new THREE.PlaneGeometry(40, 40, 32, 32);
+groundGeometry.rotateX(-Math.PI / 2);
+const groundMaterial = new THREE.MeshStandardMaterial({
+  color: 0x555555,
+  side: THREE.DoubleSide,
+});
+const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+groundMesh.castShadow = false;
+groundMesh.position.set(0, -0.3, 0);
+groundMesh.receiveShadow = true;
+scene.add(groundMesh);
+
+// GLTF Model Loading
+const loader = new GLTFLoader().setPath("public/models/");
+loader.load(
+  "scene.gltf",
+  (gltf) => {
+    console.log("Model Loaded");
+    const model = gltf.scene;
+    model.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+    model.position.set(0, 0, 0);
+    scene.add(model);
+    progressContainer.style.display = "none"; // Hide loading progress
+  },
+  (xhr) => {
+    console.log(`Loading: ${(xhr.loaded / xhr.total) * 100}%`);
+  },
+  (error) => {
+    console.error(error);
   }
+);
 
-  function onSelectEnd() {
-    this.userData.isSelecting = false;
+// Resize Handling
+window.addEventListener("resize", onWindowResize);
 
-    if (INTERSECTION) {
-      const offsetPosition = {
-        x: -INTERSECTION.x,
-        y: -INTERSECTION.y,
-        z: -INTERSECTION.z,
-        w: 1,
-      };
-      const offsetRotation = new THREE.Quaternion();
-      const transform = new XRRigidTransform(offsetPosition, offsetRotation);
-      const teleportSpaceOffset =
-        baseReferenceSpace.getOffsetReferenceSpace(transform);
-
-      renderer.xr.setReferenceSpace(teleportSpaceOffset);
-    }
-  }
-
-  controller1 = renderer.xr.getController(0);
-  controller1.addEventListener("selectstart", onSelectStart);
-  controller1.addEventListener("selectend", onSelectEnd);
-  controller1.addEventListener("connected", function (event) {
-    this.add(buildController(event.data));
-  });
-  controller1.addEventListener("disconnected", function () {
-    this.remove(this.children[0]);
-  });
-  scene.add(controller1);
-
-  controller2 = renderer.xr.getController(1);
-  controller2.addEventListener("selectstart", onSelectStart);
-  controller2.addEventListener("selectend", onSelectEnd);
-  controller2.addEventListener("connected", function (event) {
-    this.add(buildController(event.data));
-  });
-  controller2.addEventListener("disconnected", function () {
-    this.remove(this.children[0]);
-  });
-  scene.add(controller2);
-
-  // The XRControllerModelFactory will automatically fetch controller models
-  // that match what the user is holding as closely as possible. The models
-  // should be attached to the object returned from getControllerGrip in
-  // order to match the orientation of the held device.
-
-  const controllerModelFactory = new XRControllerModelFactory();
-
-  controllerGrip1 = renderer.xr.getControllerGrip(0);
-  controllerGrip1.add(
-    controllerModelFactory.createControllerModel(controllerGrip1)
-  );
-  scene.add(controllerGrip1);
-
-  controllerGrip2 = renderer.xr.getControllerGrip(1);
-  controllerGrip2.add(
-    controllerModelFactory.createControllerModel(controllerGrip2)
-  );
-  scene.add(controllerGrip2);
-
-  //
-
-  window.addEventListener("resize", onWindowResize, false);
-}
-
-function buildController(data) {
-  let geometry, material;
-
-  switch (data.targetRayMode) {
-    case "tracked-pointer":
-      geometry = new THREE.BufferGeometry();
-      geometry.setAttribute(
-        "position",
-        new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, -1], 3)
-      );
-      geometry.setAttribute(
-        "color",
-        new THREE.Float32BufferAttribute([0.5, 0.5, 0.5, 0, 0, 0], 3)
-      );
-
-      material = new THREE.LineBasicMaterial({
-        vertexColors: true,
-        blending: THREE.AdditiveBlending,
-      });
-
-      return new THREE.Line(geometry, material);
-
-    case "gaze":
-      geometry = new THREE.RingGeometry(0.02, 0.04, 32).translate(0, 0, -1);
-      material = new THREE.MeshBasicMaterial({
-        opacity: 0.5,
-        transparent: true,
-      });
-      return new THREE.Mesh(geometry, material);
-  }
-}
+// Raycasting Setup
+const raycaster = new THREE.Raycaster();
+const objectData = {
+  MaterialFBXASC032FBXASC0354_1: {
+    name: "Monitor",
+    description:
+      "Monitor adalah layar komputer yang menampilkan semua hal yang sedang kita kerjakan di komputer, seperti tulisan, gambar, video, atau game. Ibaratnya, monitor adalah jendela utama untuk melihat dan mengontrol apa yang terjadi di dalam komputer.",
+    additionalInfo:
+      "Komputer mengirimkan sinyal ke monitor, lalu monitor mengubah sinyal itu menjadi gambar atau video yang bisa kita lihat. Semakin canggih monitor, semakin tajam dan bagus tampilan yang dihasilkan.",
+  },
+  MaterialFBXASC032FBXASC0352_1: {
+    name: "Printer",
+    description:
+      "Printer adalah perangkat elektronik yang digunakan untuk mencetak dokumen, gambar, atau foto dari komputer atau perangkat lainnya ke media fisik seperti kertas. Ibaratnya, printer adalah 'pengubah' dari sesuatu yang digital menjadi sesuatu yang bisa kita pegang dan lihat langsung.",
+    additionalInfo:
+      "Printer menerima data dari komputer atau perangkat lain, memprosesnya, dan mencetak hasilnya sesuai perintah. Ada yang mencetak dalam hitam-putih, ada juga yang mencetak berwarna, tergantung jenis dan modelnya.",
+  },
+  MaterialFBXASC032FBXASC0354_ncl1_1_5: {
+    name: "CPU",
+    description:
+      "CPU (Central Processing Unit) adalah otak dari komputer atau perangkat elektronik. Ia bertanggung jawab untuk menjalankan perintah-perintah dari program dan mengolah semua data yang ada di dalam sistem. Semua perhitungan dan keputusan yang dibuat oleh komputer diproses oleh CPU.",
+    additionalInfo:
+      "CPU menerima perintah dari program, memprosesnya, dan kemudian mengirimkan hasilnya kembali ke perangkat lainnya (misalnya monitor atau printer). Proses ini sangat cepat, dan CPU melakukan jutaan operasi per detik.",
+  },
+  MaterialFBXASC032FBXASC0354_ncl1_1_3: {
+    name: "Keyboard",
+    description:
+      "Keyboard adalah perangkat input utama yang digunakan untuk memasukkan data ke dalam komputer atau perangkat elektronik lainnya. Ibaratnya, keyboard adalah 'pintu' untuk berkomunikasi dengan komputer, karena kita memberikan perintah atau mengetik teks melalui tombol-tombolnya.",
+    additionalInfo:
+      "Keyboard merupakan alat untuk mengetik dan memberikan perintah ke komputer. Semua yang kita lakukan di komputer, mulai dari menulis surat hingga bermain game, dimulai dari menekan tombol di keyboard! Tanpa keyboard, kita akan kesulitan untuk berinteraksi dengan perangkat.",
+  },
+  MaterialFBXASC032FBXASC0354_ncl1_1_1: {
+    name: "Mouse",
+    description:
+      "Mouse adalah perangkat input komputer yang digunakan untuk menggerakkan kursor di layar dan memilih atau mengklik objek di dalam sistem komputer. Ibaratnya, mouse adalah penunjuk di dunia digital, membantu kita berinteraksi secara visual dengan apa yang ada di layar.",
+    additionalInfo:
+      "Mouse merupakan alat yang digunakan untuk menggerakkan kursor di layar komputer dan klik objek atau perintah. Tanpa mouse, kita akan kesulitan berinteraksi dengan komputer, karena kita memerlukan perangkat untuk memilih, menggulir, dan menavigasi berbagai aplikasi dan file.",
+  },
+};
 
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-//
+function initThreeJS() {
+  document.addEventListener("mousedown", onMouseDown);
+  animate();
+}
 
-function animate() {
-  INTERSECTION = undefined;
+function onMouseDown(event) {
+  const coords = new THREE.Vector2(
+    (event.clientX / renderer.domElement.clientWidth) * 2 - 1,
+    -((event.clientY / renderer.domElement.clientHeight) * 2 - 1)
+  );
 
-  if (controller1.userData.isSelecting === true) {
-    tempMatrix.identity().extractRotation(controller1.matrixWorld);
+  raycaster.setFromCamera(coords, camera);
+  const intersections = raycaster.intersectObjects(scene.children, true);
 
-    raycaster.ray.origin.setFromMatrixPosition(controller1.matrixWorld);
-    raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
-
-    const intersects = raycaster.intersectObjects([floor]);
-
-    if (intersects.length > 0) {
-      INTERSECTION = intersects[0].point;
-    }
-  } else if (controller2.userData.isSelecting === true) {
-    tempMatrix.identity().extractRotation(controller2.matrixWorld);
-
-    raycaster.ray.origin.setFromMatrixPosition(controller2.matrixWorld);
-    raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
-
-    const intersects = raycaster.intersectObjects([floor]);
-
-    if (intersects.length > 0) {
-      INTERSECTION = intersects[0].point;
+  if (intersections.length > 0) {
+    const selectedObject = intersections[0].object;
+    const objectName = selectedObject.name;
+    if (objectData[objectName]) {
+      const data = objectData[objectName];
+      showPopup(data);
     }
   }
+}
 
-  if (INTERSECTION) marker.position.copy(INTERSECTION);
+function showPopup(data) {
+  document.getElementById("object-name").innerText = data.name;
+  document.getElementById("object-description").innerText = data.description;
+  document.getElementById("object-additional-info").innerText =
+    data.additionalInfo;
+  popup.classList.add("show");
+}
 
-  marker.visible = INTERSECTION !== undefined;
+closeButton.addEventListener("click", () => {
+  popup.classList.remove("show");
+});
 
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
   renderer.render(scene, camera);
 }
