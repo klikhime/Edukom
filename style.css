@@ -206,11 +206,13 @@ h1 {
   padding: 10px 15px;
   background: linear-gradient(
     45deg,
-    #000000,
-    #1b1b1b,
     #333333,
-    #000000
+    /* warna gelap yang lebih netral */ #555555,
+    /* warna abu-abu yang lebih terang */ #777777,
+    /* warna abu-abu terang */ #555555
+      /* kembalikan ke warna abu-abu yang lebih terang */
   ); /* Gradient background */
+
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   margin-bottom: 18px;
