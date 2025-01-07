@@ -13,7 +13,9 @@ const polyfill = new WebXRPolyfill();
 const startBtn = document.getElementById("start-btn");
 const helpBtn = document.getElementById("help-btn");
 // const vrBtn = document.getElementById("VRButton");
+const loadingBox = document.getElementById("loading");
 const progressContainer = document.getElementById("progress-container");
+const progressBar = document.getElementById("progress-bar");
 const popup = document.getElementById("popup");
 const closeButton = document.getElementById("close-btn");
 
@@ -27,7 +29,7 @@ startBtn.addEventListener("click", () => {
 });
 
 helpBtn.addEventListener("click", () => {
-  document.getElementById("welcome").style.display = "none";
+  document.getElementById("welcome").innerHTML = "Bantuan";
   helpBtn.style.display = "none";
   document.getElementById("desk-app").innerHTML =
     "Klik pada komponen untuk mengeksplorasi dan mendapatkan informasi lengkap tentang komponen tersebut.";
@@ -49,12 +51,18 @@ renderer.toneMapping = THREE.NeutralToneMapping;
 renderer.toneMappingExposure = 1.25;
 document.body.appendChild(renderer.domElement);
 
-// Scene and Environment Setup
+// Pengaturan Scene dan Lingkungan
 const scene = new THREE.Scene();
+
+// Membuat lingkungan gelap (opsional: RoomEnvironment dapat diganti dengan lingkungan kustom jika diperlukan)
 const environment = new RoomEnvironment();
+
+// Menggunakan PMREMGenerator untuk pantulan lingkungan
 const pmremGenerator = new THREE.PMREMGenerator(renderer);
 scene.environment = pmremGenerator.fromScene(environment).texture;
-scene.background = new THREE.Color(0x5c5c5c);
+
+// Mengatur warna latar belakang ke warna yang lebih gelap untuk mencocokkan tema
+scene.background = new THREE.Color(0x1b1b1b); // Latar belakang abu-abu gelap untuk mencocokkan tema (mendekati hitam)
 
 // Camera Setup
 const camera = new THREE.PerspectiveCamera(
@@ -85,16 +93,19 @@ controls.target = new THREE.Vector3(0, 1, 0);
 controls.update();
 
 // Lighting Setup
-const spotLight = new THREE.SpotLight(0xffffff, 3000, 100, 0.22, 1);
+// SpotLight
+const spotLight = new THREE.SpotLight(0xffffff, 2000, 100, 0.22, 1);
 spotLight.position.set(0, 25, 0);
 spotLight.castShadow = true;
 spotLight.shadow.bias = -0.0001;
 scene.add(spotLight);
 
-const ambientLight = new THREE.AmbientLight(0x404040, 2);
+// Ambient Light
+const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+// Directional Light
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
 directionalLight.position.set(10, 10, 10).normalize();
 directionalLight.castShadow = true;
 scene.add(directionalLight);
@@ -102,14 +113,20 @@ scene.add(directionalLight);
 // Ground Plane Setup
 const groundGeometry = new THREE.PlaneGeometry(40, 40, 32, 32);
 groundGeometry.rotateX(-Math.PI / 2);
+
+// Update ground material
 const groundMaterial = new THREE.MeshStandardMaterial({
-  color: 0x555555,
+  color: 0x333333,
+  roughness: 0.5,
+  metalness: 0.1,
   side: THREE.DoubleSide,
 });
+
 const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
 groundMesh.castShadow = false;
 groundMesh.position.set(0, -0.3, 0);
 groundMesh.receiveShadow = true;
+
 scene.add(groundMesh);
 
 // GLTF Model Loading
@@ -127,10 +144,13 @@ loader.load(
     });
     model.position.set(0, 0, 0);
     scene.add(model);
-    progressContainer.style.display = "none"; // Hide loading progress
+    progressContainer.style.zIndex = "none";
+    loadingBox.style.display = "none";
   },
   (xhr) => {
-    console.log(`Loading: ${(xhr.loaded / xhr.total) * 100}%`);
+    const progress = (xhr.loaded / xhr.total) * 100;
+    progressBar.style.width = `${progress}%`;
+    console.log(`Loading: ${progress}%`);
   },
   (error) => {
     console.error(error);
@@ -205,8 +225,22 @@ function onMouseDown(event) {
     const objectName = selectedObject.name;
     if (objectData[objectName]) {
       const data = objectData[objectName];
+      //   selectedObject.material.color.set(0xffffff);
       showPopup(data);
     }
+    // Loop untuk menampilkan detail objek yang terdeteksi
+    // intersections.forEach((intersection, index) => {
+    //     const selectedObject = intersection.object; // Objek yang terdeteksi
+    //     console.log(`Objek ${index + 1}:`);
+    //     console.log(`Nama objek: ${selectedObject.name}`);
+    //     console.log(`Posisi: ${selectedObject.position}`);
+    //     console.log(`Material warna: ${selectedObject.material.color.getHexString()}`);
+
+    //     // Jika objek memiliki data tambahan, tampilkan juga
+    //     if (objectData[selectedObject.name]) {
+    //       console.log(`Data objek: `, objectData[selectedObject.name]);
+    //     }
+    //   });
   }
 }
 
